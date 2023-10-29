@@ -1,33 +1,34 @@
-import json
 import os
 import random
 import shutil
 from pathlib import Path
 
 import numpy as np
-import opendatasets as od
 import torch
+from dvc.api import DVCFileSystem
 from tqdm import tqdm
 
-from .constants import DATA_PATH, DATASET_URL, KAGGLE_CREDENTIALS, TRAIN_SPLIT
+from .constants import DATA_PATH, TRAIN_SPLIT
 
 
 def download_dataset() -> None:
     """
     Downloads the dataset from Kaggle using opendatasets
     """
-
-    with open("kaggle.json", "w") as file:
-        json.dump(KAGGLE_CREDENTIALS, file)
-
     data_path = Path(DATA_PATH)
 
-    od.download(
-        DATASET_URL,
-        data_path,
-    )
+    # with open("kaggle.json", "w") as file:
+    #     json.dump(KAGGLE_CREDENTIALS, file)
+    fs = DVCFileSystem("./")
 
-    os.remove("kaggle.json")
+    fs.get("data", data_path, recursive=True)
+
+    # od.download(
+    #     DATASET_URL,
+    #     data_path,
+    # )
+
+    # os.remove("kaggle.json")
 
     split_dataset(
         base_dir=data_path / "tyre-quality-classification",
