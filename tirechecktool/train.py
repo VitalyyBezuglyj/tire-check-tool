@@ -5,6 +5,7 @@ import pytorch_lightning as pl
 import torch
 from hydra import compose, initialize
 from hydra.utils import instantiate
+from mlflow.pytorch import autolog
 from omegaconf import OmegaConf
 
 
@@ -14,6 +15,7 @@ def run_training(cfg: OmegaConf):
 
     pl.seed_everything(cfg.random_seed)
     torch.set_float32_matmul_precision(cfg.float_precision)
+    autolog()
 
     dm = instantiate(cfg.data_module)
     model = instantiate(cfg.tire_check_model)
