@@ -163,3 +163,4 @@ cython_debug/
 tirechecktool/data
 tirechecktool/outputs
 /data
+/outputs

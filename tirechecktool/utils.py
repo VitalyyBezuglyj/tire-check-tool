@@ -5,7 +5,7 @@ from pathlib import Path
 
 import numpy as np
 import torch
-from dvc.api import DVCFileSystem
+from dvc.repo import Repo
 from tqdm import tqdm
 
 from .constants import DATA_PATH, TRAIN_SPLIT
@@ -19,9 +19,9 @@ def download_dataset() -> None:
 
     # with open("kaggle.json", "w") as file:
     #     json.dump(KAGGLE_CREDENTIALS, file)
-    fs = DVCFileSystem("./")
+    Repo.get("git@github.com:VitalyyBezuglyj/tire-check-tool.git", "data")
 
-    fs.get("data", data_path, recursive=True)
+    input("Wait for downloading data..")
 
     # od.download(
     #     DATASET_URL,
