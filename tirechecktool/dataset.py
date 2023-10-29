@@ -3,10 +3,9 @@ from pathlib import Path
 
 import pytorch_lightning as pl
 from dvc.repo import Repo
+from omegaconf import OmegaConf
 from torch.utils.data import DataLoader, random_split
 from torchvision import datasets, transforms
-
-from .constants import DATA_PATH
 
 
 class TireCheckDataModule(pl.LightningDataModule):
@@ -14,30 +13,32 @@ class TireCheckDataModule(pl.LightningDataModule):
     Pytorch Lightning data module for tire check classification.
     """
 
-    def __init__(self, batch_size: int = 32):
+    def __init__(self, cfg: OmegaConf):
         super().__init__()
-        self.batch_size = batch_size
-        self.data_dir = Path(DATA_PATH)
+        self.batch_size = cfg.train.batch_size
+        self.data_dir = Path(cfg.data.root_path)
 
-        img_mean = [0.485, 0.456, 0.406]
-        img_std = [0.229, 0.224, 0.225]
+        img_mean = cfg.data.preprocessing.mean
+        img_std = cfg.data.preprocessing.std
+        img_size = cfg.data.preprocessing.resize
         self.train_transforms = transforms.Compose(
             [
                 transforms.RandomHorizontalFlip(),
                 transforms.RandomRotation(10),
-                transforms.Resize((150, 150)),
+                transforms.Resize(img_size),
                 transforms.ToTensor(),
                 transforms.Normalize(img_mean, img_std),
             ]
         )
         self.val_transforms = transforms.Compose(
             [
-                transforms.Resize((150, 150)),
+                transforms.Resize(img_size),
                 transforms.ToTensor(),
                 transforms.Normalize(img_mean, img_std),
             ]
         )
         self._teardown = False
+        self.cfg = cfg
 
     def prepare_data(self) -> None:
         """
@@ -46,7 +47,7 @@ class TireCheckDataModule(pl.LightningDataModule):
         # check if data already exists
         if (self.data_dir).exists():
             return super().prepare_data()
-        Repo.get("git@github.com:VitalyyBezuglyj/tire-check-tool.git", "data")
+        Repo.get(self.cfg.data.git_url, self.cfg.data.root_path)
         return super().prepare_data()
 
     def setup(self, stage="fit"):
