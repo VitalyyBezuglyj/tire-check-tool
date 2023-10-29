@@ -164,3 +164,5 @@ tirechecktool/data
 tirechecktool/outputs
 /data
 /outputs
+/logs
+/lightning_logs
