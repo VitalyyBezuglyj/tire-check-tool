@@ -3,7 +3,6 @@ from pathlib import Path
 
 import pytorch_lightning as pl
 from dvc.repo import Repo
-from omegaconf import OmegaConf
 from torch.utils.data import DataLoader, random_split
 from torchvision import datasets, transforms
 
@@ -13,32 +12,42 @@ class TireCheckDataModule(pl.LightningDataModule):
     Pytorch Lightning data module for tire check classification.
     """
 
-    def __init__(self, cfg: OmegaConf):
+    def __init__(
+        self,
+        batch_size: int = 32,
+        data_dir: Path = Path("data"),
+        git_url: str = "",
+        img_size: int = 150,
+        img_mean: tuple = (0.5, 0.5, 0.5),
+        img_std: tuple = (0.5, 0.5, 0.5),
+        random_rotation: int = 10,
+        teardown: bool = False,
+        train_split: float = 0.8,
+    ):
         super().__init__()
-        self.batch_size = cfg.train.batch_size
-        self.data_dir = Path(cfg.data.root_path)
+        self.batch_size = batch_size
+        self.data_dir = Path(data_dir)
+        resize = (img_size, img_size)
 
-        img_mean = cfg.data.preprocessing.mean
-        img_std = cfg.data.preprocessing.std
-        img_size = cfg.data.preprocessing.resize
         self.train_transforms = transforms.Compose(
             [
                 transforms.RandomHorizontalFlip(),
-                transforms.RandomRotation(10),
-                transforms.Resize(img_size),
+                transforms.RandomRotation(random_rotation),
+                transforms.Resize(resize),
                 transforms.ToTensor(),
                 transforms.Normalize(img_mean, img_std),
             ]
         )
         self.val_transforms = transforms.Compose(
             [
-                transforms.Resize(img_size),
+                transforms.Resize(resize),
                 transforms.ToTensor(),
                 transforms.Normalize(img_mean, img_std),
             ]
         )
-        self._teardown = False
-        self.cfg = cfg
+        self._teardown = teardown
+        self.git_url = git_url
+        self.train_split = train_split
 
     def prepare_data(self) -> None:
         """
@@ -47,7 +56,7 @@ class TireCheckDataModule(pl.LightningDataModule):
         # check if data already exists
         if (self.data_dir).exists():
             return super().prepare_data()
-        Repo.get(self.cfg.data.git_url, self.cfg.data.root_path)
+        Repo.get(self.git_url, self.data_dir)
         return super().prepare_data()
 
     def setup(self, stage="fit"):
@@ -58,7 +67,7 @@ class TireCheckDataModule(pl.LightningDataModule):
             tires_dataset = datasets.ImageFolder(
                 self.data_dir / "tyre-quality-classification", transform=self.train_transforms
             )
-            train_size = int(0.8 * len(tires_dataset))
+            train_size = int(self.train_split * len(tires_dataset))
             val_size = len(tires_dataset) - train_size
             self.train_dataset, self.val_dataset = random_split(tires_dataset, [train_size, val_size])
         elif stage == "test":

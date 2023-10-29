@@ -1,9 +1,7 @@
-from pathlib import Path
-
-import pandas as pd
 import pytorch_lightning as pl
 import torch
 import torch.nn as nn
+from hydra.utils import instantiate
 from omegaconf import OmegaConf
 from torchmetrics import MetricCollection
 from torchmetrics.classification import (
@@ -43,24 +41,33 @@ class TireCheckModel(pl.LightningModule):
     Pytorch Lightning model for tire check classification.
     """
 
-    def __init__(self, cfg: OmegaConf):
+    def __init__(
+        self,
+        n_classes: int = 2,
+        learning_rate: float = 1e-3,
+        optimizer: OmegaConf = None,
+        scheduler: OmegaConf = None,
+    ):
         super().__init__()
-        self.cfg = cfg
-        self.model = SimpleCNN(cfg.model.n_classes)
-        self.learning_rate = cfg.train.learning_rate
+        self.n_classes = n_classes
+        self.model = SimpleCNN(n_classes)
+        self.learning_rate = learning_rate
         self.loss = nn.CrossEntropyLoss()
         metrics = MetricCollection(
             [
-                MulticlassAccuracy(num_classes=cfg.model.n_classes),
-                MulticlassPrecision(num_classes=cfg.model.n_classes),
-                MulticlassRecall(num_classes=cfg.model.n_classes),
-                MulticlassF1Score(num_classes=cfg.model.n_classes),
+                MulticlassAccuracy(num_classes=n_classes),
+                MulticlassPrecision(num_classes=n_classes),
+                MulticlassRecall(num_classes=n_classes),
+                MulticlassF1Score(n_classes),
             ]
         )
 
         self.train_metrics = metrics.clone(prefix="train_")
         self.val_metrics = metrics.clone(prefix="val_")
         self.test_metrics = metrics.clone()
+
+        self.optimizer_cfg = optimizer
+        self.scheduler_cfg = scheduler
 
     def forward(self, x):
         return self.model(x)
@@ -106,23 +113,13 @@ class TireCheckModel(pl.LightningModule):
 
     def on_test_epoch_end(self) -> None:
         test_metrics = self.test_metrics.compute()
-
-        test_metrics = {k: [v.item()] for k, v in test_metrics.items()}
-        print(test_metrics)
-
-        if self.cfg.artifacts.metrics.save:
-            metric_filename = Path(self.cfg.artifacts.base_path) / "metrics.csv"
-
-            pd.DataFrame(test_metrics).to_csv(metric_filename, index=False)
-            self.test_metrics.reset()
-            return super().on_test_epoch_end()
+        self.log_dict(test_metrics, prog_bar=True)
+        self.test_metrics.reset()
 
     def configure_optimizers(self):
-        optimizer = torch.optim.AdamW(
-            self.model.parameters(),
-            lr=self.learning_rate,
-        )
-        return {"optimizer": optimizer}
+        optimizer = instantiate(self.optimizer_cfg, self.model.parameters())
+        scheduler = instantiate(self.scheduler_cfg, optimizer)
+        return {"optimizer": optimizer, "lr_scheduler": scheduler, "monitor": "val_loss"}
 
     def on_before_optimizer_step(self, optimizer):
         self.log_dict(pl.utilities.grad_norm(self, norm_type=2))

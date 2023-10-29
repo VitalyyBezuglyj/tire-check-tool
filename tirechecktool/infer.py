@@ -4,9 +4,9 @@ from pathlib import Path
 import pytorch_lightning as pl
 import torch
 from hydra import compose, initialize
+from hydra.utils import instantiate
 from omegaconf import OmegaConf
 
-from .dataset import TireCheckDataModule
 from .model import TireCheckModel
 
 
@@ -15,26 +15,20 @@ def run_inferring(cfg: OmegaConf):
     log.setLevel(cfg.log_level.upper())
     pl.seed_everything(cfg.random_seed)
 
-    ckpt_path = Path(cfg.artifacts.base_path) / cfg.artifacts.checkpoint.path
-    best_model_name = ckpt_path / "best.txt"
+    ckpt_path = Path(cfg.callbacks.model_ckpt.dirpath)
+    best_model_names = list(ckpt_path.glob("best_*.ckpt"))
+    best_checkpoint_name = best_model_names[0]
 
-    with open(best_model_name, "r") as f:
-        best_checkpoint_name = f.readline()
+    model = TireCheckModel.load_from_checkpoint(best_checkpoint_name)
 
-    model = TireCheckModel.load_from_checkpoint(best_checkpoint_name, cfg=cfg)
-
-    dm = TireCheckDataModule(cfg=cfg)
+    dm = instantiate(cfg.data_module)
     dm.setup(stage="predict")
 
-    if torch.cuda.is_available():
-        accelerator = cfg.train.accelerator
-    else:
+    if not torch.cuda.is_available():
         log.warning("CUDA is not available, using CPU")
-        accelerator = "cpu"
+        cfg.trainer.accelerator = "cpu"
 
-    trainer = pl.Trainer(
-        accelerator=accelerator,
-    )
+    trainer = instantiate(cfg.inferer)
 
     trainer.test(model, dm)
 

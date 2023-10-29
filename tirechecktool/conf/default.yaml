@@ -3,57 +3,80 @@ exp_name: default
 float_precision: "medium"
 log_level: info
 
-data:
-  root_path: "data"
-  git_url: "git@github.com:VitalyyBezuglyj/tire-check-tool.git"
-  preprocessing:
-    resize: [150, 150]
-    mean: [0.485, 0.456, 0.406]
-    std: [0.229, 0.224, 0.225]
-  val_split: 0.2
-
-model:
-  n_classes: 2
+save_ckpt: True 
+save_logs: True
 
 
-train:
+data_module:
+  _target_: tirechecktool.dataset.TireCheckDataModule
   batch_size: 32
-  learning_rate: 1e-3
-  n_epoch: 5
-  grad_accum_steps: 1
-  accelerator: gpu
-  devices:
-    - 0
-  precision: 16-mixed
-  val_check_interval: 1.0
-  overfit_batches: 0
-  num_sanity_val_steps: 4
-  full_deterministic_mode: false
-  benchmark: false
-  gradient_clip_val: 1.0
-  profiler:
-  log_every_n_steps: 25
-  detect_anomaly: false
+  data_dir: data
+  git_url: "git@github.com:VitalyyBezuglyj/tire-check-tool.git"
+  img_size: 150
+  img_mean: [0.485, 0.456, 0.406]
+  img_std: [0.229, 0.224, 0.225]
+  random_rotation: 10
+  teardown: False
 
-artifacts:
-  base_path: outputs
-  checkpoint:
-    save: true
-    path: checkpoints
-    filename: "{epoch:02d}-{val_MulticlassF1Score:.4f}"
-    monitor: val_MulticlassF1Score
+tire_check_model:
+  _target_: tirechecktool.model.TireCheckModel
+  _recursive_: False
+  n_classes: 2
+  learning_rate: 1e-3
+  optimizer:
+    _target_: torch.optim.AdamW
+    lr: 1e-3
+  scheduler:
+    _target_: torch.optim.lr_scheduler.ReduceLROnPlateau
     mode: max
-    save_top_k: 1
-    every_n_epochs: 1
-    save_last: true
-  logs:
-    save: true
-    path: logs
-  metrics:
-    save: true
+    factor: 0.1
+    patience: 2
+    verbose: True
+    threshold: 0.0001
+    threshold_mode: rel
+    cooldown: 0
+    min_lr: 0
+    eps: 1e-08
+
 
 callbacks:
   lr_monitor:
-    interval: step
+    _target_: pytorch_lightning.callbacks.LearningRateMonitor
+    logging_interval: step
   model_summary:
+    _target_: pytorch_lightning.callbacks.RichModelSummary
     max_depth: 1
+  device_stats:
+    _target_: pytorch_lightning.callbacks.DeviceStatsMonitor
+  model_ckpt:
+    _target_: pytorch_lightning.callbacks.ModelCheckpoint
+    save_top_k: 1
+    monitor: val_MulticlassF1Score
+    mode: max
+    filename: "best_{epoch:02d}-{val_MulticlassF1Score:.4f}"
+    every_n_epochs: 1
+    save_last: True
+    save_weights_only: False
+    dirpath: outputs/checkpoints
+
+logger:
+  _target_: pytorch_lightning.loggers.CSVLogger
+  save_dir: outputs/logs
+
+trainer:
+  _target_: pytorch_lightning.Trainer
+  precision: 16-mixed
+  accelerator: gpu
+  max_epochs: 5
+  gradient_clip_val: 1.0
+  log_every_n_steps: 25
+  deterministic: False
+  benchmark: False
+  num_sanity_val_steps: 4
+  overfit_batches: 0
+  val_check_interval: 1.0
+
+
+inferer:
+  _target_: pytorch_lightning.Trainer
+  accelerator: gpu

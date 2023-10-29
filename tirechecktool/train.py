@@ -4,10 +4,8 @@ from pathlib import Path
 import pytorch_lightning as pl
 import torch
 from hydra import compose, initialize
+from hydra.utils import instantiate
 from omegaconf import OmegaConf
-
-from .dataset import TireCheckDataModule
-from .model import TireCheckModel
 
 
 def run_training(cfg: OmegaConf):
@@ -17,56 +15,34 @@ def run_training(cfg: OmegaConf):
     pl.seed_everything(cfg.random_seed)
     torch.set_float32_matmul_precision(cfg.float_precision)
 
-    dm = TireCheckDataModule(cfg=cfg)
-    model = TireCheckModel(cfg=cfg)
-
-    outs_path = Path(cfg.artifacts.base_path)
+    dm = instantiate(cfg.data_module)
+    model = instantiate(cfg.tire_check_model)
 
     loggers = []
-    if cfg.artifacts.logs.save:
-        loggers.append(pl.loggers.CSVLogger(outs_path / cfg.artifacts.logs.path, name=cfg.exp_name)),
+    if cfg.save_logs:
+        loggers.append(instantiate(cfg.logger)),
 
     callbacks = [
-        pl.callbacks.LearningRateMonitor(logging_interval=cfg.callbacks.lr_monitor.interval),
-        pl.callbacks.DeviceStatsMonitor(),
-        pl.callbacks.RichModelSummary(max_depth=cfg.callbacks.model_summary.max_depth),
+        instantiate(cfg.callbacks.lr_monitor),
+        instantiate(cfg.callbacks.device_stats),
+        instantiate(cfg.callbacks.model_summary),
     ]
-    if cfg.artifacts.checkpoint.save:
-        checkpoint_callback = pl.callbacks.ModelCheckpoint(
-            dirpath=outs_path / cfg.artifacts.checkpoint.path,
-            monitor=cfg.artifacts.checkpoint.monitor,
-            filename=cfg.artifacts.checkpoint.filename,
-            save_top_k=cfg.artifacts.checkpoint.save_top_k,
-            mode=cfg.artifacts.checkpoint.mode,
-            save_last=cfg.artifacts.checkpoint.save_last,
-        )
+    if cfg.save_ckpt:
+        checkpoint_callback = instantiate(cfg.callbacks.model_ckpt)
 
         callbacks.append(checkpoint_callback)
 
-    if torch.cuda.is_available():
-        accelerator = cfg.train.accelerator
-    else:
+    if not torch.cuda.is_available():
         log.warning("CUDA is not available, using CPU")
-        accelerator = "cpu"
+        cfg.trainer.accelerator = "cpu"
 
-    trainer = pl.Trainer(
-        accelerator=accelerator,
-        log_every_n_steps=cfg.train.log_every_n_steps,
-        precision=cfg.train.precision,
-        max_epochs=cfg.train.n_epoch,
-        logger=loggers,
+    trainer = instantiate(
+        cfg.trainer,
         callbacks=callbacks,
+        logger=loggers,
     )
 
     trainer.fit(model, dm)
-
-    if cfg.artifacts.checkpoint.save:
-        print(checkpoint_callback.best_model_path)
-
-        best_model_name = outs_path / cfg.artifacts.checkpoint.path / "best.txt"
-
-        with open(best_model_name, "w") as f:
-            f.write(checkpoint_callback.best_model_path)
 
 
 def train(config_name: str = "default", config_path: str = "conf", **kwargs):
