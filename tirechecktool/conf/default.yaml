@@ -1,10 +1,14 @@
 random_seed: 1244
-exp_name: default
+exp_name: &exp_name default 
 float_precision: "medium"
 log_level: info
 
 save_ckpt: True 
 save_logs: True
+
+code_version:
+  version: 0.1.0
+  git_commit_id: "" # will be filled during run
 
 
 data_module:
@@ -59,9 +63,19 @@ callbacks:
     save_weights_only: False
     dirpath: outputs/checkpoints
 
-logger:
-  _target_: pytorch_lightning.loggers.CSVLogger
-  save_dir: outputs/logs
+loggers:
+  log_to: ['csv', 'mlflow'] # possible values: ['csv', 'mlflow']
+  mlflow:
+    _target_: pytorch_lightning.loggers.MLFlowLogger
+    log_model: True
+    save_dir: ./outputs/mlfolw_logs
+    experiment_name: *exp_name
+    tags: {exp_name: *exp_name}
+    tracking_uri: http://localhost:5000
+    artifact_location: ./outputs/mlflow_artifacts
+  csv:
+    _target_: pytorch_lightning.loggers.CSVLogger
+    save_dir: outputs/csv_logs
 
 trainer:
   _target_: pytorch_lightning.Trainer
