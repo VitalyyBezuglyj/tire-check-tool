@@ -33,7 +33,7 @@ def infer_mlflow(cfg: OmegaConf, image_path: str):
     onnx_model = onnx.load_model(filepath)
 
     # log the model into a mlflow run
-    mlflow.set_tracking_uri("http://127.0.0.1:5000")
+    mlflow.set_tracking_uri(cfg.loggers.tracking_uri)
 
     input_sample = np.random.randn(*cfg.export.input_sample_shape)
 
@@ -55,7 +55,7 @@ def infer_mlflow(cfg: OmegaConf, image_path: str):
 
 def run_server(
     image: str,
-    config_path: str = "conf",
+    config_path: str = "../configs",
     config_name: str = "default",
     **kwargs,
 ):

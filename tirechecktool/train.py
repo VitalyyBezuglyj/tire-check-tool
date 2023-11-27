@@ -54,7 +54,9 @@ def run_training(cfg: OmegaConf):
     trainer.fit(model, dm)
 
 
-def train(config_name: str = "default", config_path: str = "conf", **kwargs):
+def train(
+    config_name: str = "default", config_path: str = "../configs", **kwargs
+):
     """
     Run training. `train -- --help` for more info.
 

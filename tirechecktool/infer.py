@@ -33,7 +33,9 @@ def run_inferring(cfg: OmegaConf):
     trainer.test(model, dm)
 
 
-def infer(config_path: str = "conf", config_name: str = "default", **kwargs):
+def infer(
+    config_path: str = "../configs", config_name: str = "default", **kwargs
+):
     """
     Run inference. `infer -- --help` for more info.
 

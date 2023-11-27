@@ -49,7 +49,7 @@ def export_to_onnx(cfg: OmegaConf):
 
 
 def export_onnx(
-    config_name: str = "default", config_path: str = "conf", **kwargs
+    config_name: str = "default", config_path: str = "../configs", **kwargs
 ):
     """
     Run training. `train -- --help` for more info.
