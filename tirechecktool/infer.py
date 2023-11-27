@@ -7,7 +7,7 @@ from hydra import compose, initialize
 from hydra.utils import instantiate
 from omegaconf import OmegaConf
 
-from .model import TireCheckModel
+from tirechecktool.model import TireCheckModel
 
 
 def run_inferring(cfg: OmegaConf):
@@ -42,8 +42,15 @@ def infer(config_path: str = "conf", config_name: str = "default", **kwargs):
         :param config_name: name of config file, inside config_path
         :param **kwargs: additional arguments, overrides for config. Can be passed as `--arg=value`.
     """
-    initialize(version_base="1.3", config_path=config_path, job_name="tirechecktool-train")
-    cfg = compose(config_name=config_name, overrides=[f"{k}={v}" for k, v in kwargs.items()])
+    initialize(
+        version_base="1.3",
+        config_path=config_path,
+        job_name="tirechecktool-train",
+    )
+    cfg = compose(
+        config_name=config_name,
+        overrides=[f"{k}={v}" for k, v in kwargs.items()],
+    )
     print(OmegaConf.to_yaml(cfg))
     run_inferring(cfg)
 

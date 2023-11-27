@@ -20,6 +20,8 @@ dvc-gdrive = "^2.20.0"
 lightning = "^2.1.0"
 rich = "^13.6.0"
 pexpect = "^4.8.0"
+onnx = "^1.15.0"
+onnxruntime = "^1.16.3"
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^3.4.0"
