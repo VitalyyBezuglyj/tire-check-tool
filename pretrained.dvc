@@ -1,0 +1,6 @@
+outs:
+- md5: cc649db17536a0ebe2ae76fe3899560b.dir
+  size: 42571375
+  nfiles: 1
+  hash: md5
+  path: pretrained
