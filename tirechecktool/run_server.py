@@ -22,12 +22,14 @@ def infer_mlflow(cfg: OmegaConf, image_path: str):
 
     filepath = Path(cfg.export.export_path) / model_name
     if not filepath.exists():
-        raise ValueError(f"Model {model_name} does not exist at {filepath.parent.absolute()}")
+        raise ValueError(
+            f"Model {model_name} does not exist at {filepath.parent.absolute()}"
+        )
 
     onnx_model = onnx.load_model(filepath)
 
     # log the model into a mlflow run
-    mlflow.set_tracking_uri(cfg.loggers.tracking_uri)
+    mlflow.set_tracking_uri(cfg.loggers.mlflow.tracking_uri)
 
     input_sample = np.random.randn(*cfg.export.input_sample_shape)
 
@@ -40,7 +42,9 @@ def infer_mlflow(cfg: OmegaConf, image_path: str):
 
     # load the logged model and make a prediction
     onnx_pyfunc = mlflow.pyfunc.load_model(model_info.model_uri)
-    predictions = onnx_pyfunc.predict(preprocess_image(image_path=image_path, cfg_data=cfg.data_module))
+    predictions = onnx_pyfunc.predict(
+        preprocess_image(image_path=image_path, cfg_data=cfg.data_module)
+    )
 
     print(postprocess(predictions))
 

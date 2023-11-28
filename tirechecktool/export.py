@@ -7,6 +7,7 @@ from hydra import compose, initialize
 from omegaconf import OmegaConf
 
 from tirechecktool.model import TireCheckModel
+from tirechecktool.utils import get_model_path
 
 # from icecream import ic
 
@@ -16,11 +17,9 @@ def export_to_onnx(cfg: OmegaConf):
     log.setLevel(cfg.log_level.upper())
     pl.seed_everything(cfg.random_seed)
 
-    ckpt_path = Path(cfg.callbacks.model_ckpt.dirpath)
-    best_model_names = list(ckpt_path.glob("best_*.ckpt"))
-    best_checkpoint_name = best_model_names[0]
+    ckpt_path = get_model_path(cfg)
 
-    model = TireCheckModel.load_from_checkpoint(best_checkpoint_name)
+    model = TireCheckModel.load_from_checkpoint(ckpt_path)
 
     model_name = cfg.export.export_name
     if cfg.export.name_version:
@@ -48,7 +47,9 @@ def export_to_onnx(cfg: OmegaConf):
     log.info(f"Exported to {filepath}")
 
 
-def export_onnx(config_name: str = "default", config_path: str = "../configs", **kwargs):
+def export_onnx(
+    config_name: str = "default", config_path: str = "../configs", **kwargs
+):
     """
     Run training. `train -- --help` for more info.
 
