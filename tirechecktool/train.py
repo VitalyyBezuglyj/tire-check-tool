@@ -26,9 +26,7 @@ def run_training(cfg: OmegaConf):
     if cfg.save_logs:
         for logger in cfg.loggers.log_to:
             new_logger = instantiate(cfg.loggers[logger])
-            new_logger.log_hyperparams(
-                OmegaConf.to_container(cfg, resolve=True)
-            )
+            new_logger.log_hyperparams(OmegaConf.to_container(cfg, resolve=True))
             loggers.append(new_logger)
 
     callbacks = [
@@ -54,9 +52,7 @@ def run_training(cfg: OmegaConf):
     trainer.fit(model, dm)
 
 
-def train(
-    config_name: str = "default", config_path: str = "../configs", **kwargs
-):
+def train(config_name: str = "default", config_path: str = "../configs", **kwargs):
     """
     Run training. `train -- --help` for more info.
 

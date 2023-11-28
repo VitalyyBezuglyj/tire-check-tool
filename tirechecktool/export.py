@@ -48,9 +48,7 @@ def export_to_onnx(cfg: OmegaConf):
     log.info(f"Exported to {filepath}")
 
 
-def export_onnx(
-    config_name: str = "default", config_path: str = "../configs", **kwargs
-):
+def export_onnx(config_name: str = "default", config_path: str = "../configs", **kwargs):
     """
     Run training. `train -- --help` for more info.
 

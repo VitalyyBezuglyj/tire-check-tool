@@ -1,14 +1,13 @@
 random_seed: 1244
-exp_name: &exp_name default 
+exp_name: &exp_name default
 float_precision: "medium"
 log_level: info
 
-save_ckpt: True 
+save_ckpt: True
 save_logs: True
 use_pretrained: False
-pretrained_dir: 'pretrained'
-pretrained_model: '' # if empty, will use the latest checkpoint
-
+pretrained_dir: "pretrained"
+pretrained_model: "" # if empty, will use the latest checkpoint
 
 code_version:
   version: 0.1.0
@@ -51,7 +50,6 @@ tire_check_model:
     min_lr: 0
     eps: 1e-08
 
-
 callbacks:
   lr_monitor:
     _target_: pytorch_lightning.callbacks.LearningRateMonitor
@@ -73,13 +71,13 @@ callbacks:
     dirpath: outputs/checkpoints
 
 loggers:
-  log_to: ['csv', 'mlflow'] # possible values: ['csv', 'mlflow']
+  log_to: ["csv", "mlflow"] # possible values: ['csv', 'mlflow']
   mlflow:
     _target_: pytorch_lightning.loggers.MLFlowLogger
     log_model: True
     save_dir: ./outputs/mlfolw_logs
     experiment_name: *exp_name
-    tags: {exp_name: *exp_name}
+    tags: { exp_name: *exp_name }
     tracking_uri: http://localhost:5000
     artifact_location: ./outputs/mlflow_artifacts
   csv:
@@ -98,7 +96,6 @@ trainer:
   num_sanity_val_steps: 4
   overfit_batches: 0
   val_check_interval: 1.0
-
 
 inferer:
   _target_: pytorch_lightning.Trainer

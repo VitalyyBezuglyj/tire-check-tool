@@ -2,16 +2,12 @@ from logging import getLogger
 from pathlib import Path
 
 import mlflow
-
-import onnx
 import numpy as np
+import onnx
 from hydra import compose, initialize
 from omegaconf import OmegaConf
 
-from tirechecktool.utils import (
-    preprocess_image,
-    postprocess,
-)
+from tirechecktool.utils import postprocess, preprocess_image
 
 
 def infer_mlflow(cfg: OmegaConf, image_path: str):
@@ -26,9 +22,7 @@ def infer_mlflow(cfg: OmegaConf, image_path: str):
 
     filepath = Path(cfg.export.export_path) / model_name
     if not filepath.exists():
-        raise ValueError(
-            f"Model {model_name} does not exist at {filepath.parent.absolute()}"
-        )
+        raise ValueError(f"Model {model_name} does not exist at {filepath.parent.absolute()}")
 
     onnx_model = onnx.load_model(filepath)
 
@@ -46,9 +40,7 @@ def infer_mlflow(cfg: OmegaConf, image_path: str):
 
     # load the logged model and make a prediction
     onnx_pyfunc = mlflow.pyfunc.load_model(model_info.model_uri)
-    predictions = onnx_pyfunc.predict(
-        preprocess_image(image_path=image_path, cfg_data=cfg.data_module)
-    )
+    predictions = onnx_pyfunc.predict(preprocess_image(image_path=image_path, cfg_data=cfg.data_module))
 
     print(postprocess(predictions))
 
