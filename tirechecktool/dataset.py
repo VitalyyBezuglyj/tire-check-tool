@@ -59,7 +59,7 @@ class TireCheckDataModule(pl.LightningDataModule):
             return super().prepare_data()
         Repo.get(
             url=self.git_url,
-            path=str(self.data_dir),
+            path="data",
             rev=get_git_info(),
         )
         return super().prepare_data()
