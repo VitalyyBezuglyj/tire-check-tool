@@ -1,6 +1,6 @@
 outs:
-- md5: c027c62eef53031170523247ea38fc66.dir
-  size: 127718570
+- md5: cc9bed00de76512d8483733047bd7250.dir
+  size: 14917842
   nfiles: 1
   hash: md5
   path: pretrained
