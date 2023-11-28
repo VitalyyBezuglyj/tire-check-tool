@@ -5,7 +5,7 @@ import pytorch_lightning as pl
 from dvc.repo import Repo
 from torch.utils.data import DataLoader, random_split
 from torchvision import datasets, transforms
-from utils import log_git_info
+from tirechecktool.utils import log_git_info
 
 
 class TireCheckDataModule(pl.LightningDataModule):
