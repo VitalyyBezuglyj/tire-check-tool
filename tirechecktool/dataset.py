@@ -58,7 +58,7 @@ class TireCheckDataModule(pl.LightningDataModule):
         if (self.data_dir).exists():
             return super().prepare_data()
         Repo.get(
-            url=str(self.git_url),
+            url=self.git_url,
             path=str(self.data_dir),
             rev=get_git_info(),
         )
