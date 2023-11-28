@@ -7,6 +7,20 @@ from omegaconf import OmegaConf
 from PIL import Image
 
 
+def get_git_info():
+    """
+    Get git info.
+
+    Returns:
+        str: git commit id
+    """
+    return (
+        subprocess.check_output(["git", "describe", "--always"])
+        .strip()
+        .decode()
+    )
+
+
 def log_git_info(cfg: OmegaConf):
     """
     Log git info to the config.
@@ -14,11 +28,7 @@ def log_git_info(cfg: OmegaConf):
     Args:
         cfg: hydra config
     """
-    cfg.code_version.git_commit_id = (
-        subprocess.check_output(["git", "describe", "--always"])
-        .strip()
-        .decode()
-    )
+    cfg.code_version.git_commit_id = get_git_info()
     return cfg.code_version.git_commit_id
 
 

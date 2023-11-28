@@ -5,7 +5,7 @@ import pytorch_lightning as pl
 from dvc.repo import Repo
 from torch.utils.data import DataLoader, random_split
 from torchvision import datasets, transforms
-from tirechecktool.utils import log_git_info
+from tirechecktool.utils import get_git_info
 
 
 class TireCheckDataModule(pl.LightningDataModule):
@@ -60,7 +60,7 @@ class TireCheckDataModule(pl.LightningDataModule):
         Repo.get(
             url=self.git_url,
             path=self.data_dir,
-            rev=log_git_info(),
+            rev=get_git_info(),
         )
         return super().prepare_data()
 
