@@ -2,19 +2,8 @@ from omegaconf import OmegaConf
 import subprocess
 import numpy as np
 from PIL import Image
-import mlflow
-from os import environ
-
-
-def set_run_id():
-    environ["MLFLOW_RUN_ID"] = str(mlflow.active_run().run_id)
-
-
-def get_run_id():
-    if environ.get("Foo") is not None:
-        return environ["MLFLOW_RUN_ID"]
-    else:
-        return None
+from pathlib import Path
+from dvc.repo import Repo
 
 
 def log_git_info(cfg: OmegaConf):
@@ -24,9 +13,11 @@ def log_git_info(cfg: OmegaConf):
     Args:
         cfg: hydra config
     """
-    cfg.code_version.git_commit_id = subprocess.check_output(
-        ["git", "describe", "--always"]
-    ).strip()
+    cfg.code_version.git_commit_id = (
+        subprocess.check_output(["git", "describe", "--always"])
+        .strip()
+        .decode()
+    )
 
 
 def preprocess_image(image_path, cfg_data: OmegaConf):
@@ -58,6 +49,65 @@ def softmax(x):
     """Compute softmax values for each sets of scores in x."""
     e_x = np.exp(x - np.max(x))
     return e_x / e_x.sum()
+
+
+def load_pretained_models(cfg: OmegaConf):
+    """
+    Downloads the pretrained model using dvc.api.
+    """
+    # check if data already exists
+    data_path = Path(cfg.pretrained_dir)
+    if data_path.exists():
+        print("Pretrained models already loaded")
+        return
+
+    log_git_info(cfg)
+    Repo.get(
+        cfg.data_module.git_url,
+        cfg.pretrained_dir,
+        rev=cfg.code_version.git_commit_id,
+    )
+    print("Pretrained models loaded")
+
+
+def get_model_path(cfg: OmegaConf):
+    """
+    Choose the pretrained model and return path.
+    """
+
+    if cfg.use_pretrained:
+        load_pretained_models(cfg)
+        # check if data already exists
+        data_path = Path(cfg.pretrained_dir)
+        if len(cfg.pretrained_model) > 0:
+            model_path = data_path / cfg.pretrained_model
+            if model_path.exists():
+                return model_path
+            else:
+                raise ValueError(
+                    f"Model {cfg.pretrained_model} does not exist at {model_path.absolute()}"
+                )
+        else:
+            pretrained_model_names = sorted(
+                list(data_path.glob("*.ckpt")), reverse=True
+            )
+            if len(pretrained_model_names) == 0:
+                raise ValueError(
+                    f"No pretrained model found at {data_path.absolute()}"
+                )
+            return pretrained_model_names[0]
+    else:
+        # Choose best ckpt from training
+        ckpt_path = Path(cfg.callbacks.model_ckpt.dirpath)
+        best_model_names = sorted(
+            list(ckpt_path.glob("best_*.ckpt")), reverse=True
+        )
+        if len(best_model_names) == 0:
+            raise ValueError(
+                f"No best model found at {ckpt_path.absolute()}, please train model first,\
+                    or use pretrained model (cfg: use_pretrained)"
+            )
+        return best_model_names[0]
 
 
 # def load_image(img_path: str, size: list) -> np.ndarray:

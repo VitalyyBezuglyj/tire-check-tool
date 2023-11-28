@@ -5,6 +5,10 @@ log_level: info
 
 save_ckpt: True 
 save_logs: True
+use_pretrained: False
+pretrained_dir: 'pretrained'
+pretrained_model: '' # if empty, will use the latest checkpoint
+
 
 code_version:
   version: 0.1.0

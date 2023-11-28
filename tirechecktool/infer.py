@@ -1,5 +1,4 @@
 from logging import getLogger
-from pathlib import Path
 
 import pytorch_lightning as pl
 import torch
@@ -8,6 +7,7 @@ from hydra.utils import instantiate
 from omegaconf import OmegaConf
 
 from tirechecktool.model import TireCheckModel
+from tirechecktool.utils import get_model_path
 
 
 def run_inferring(cfg: OmegaConf):
@@ -15,11 +15,9 @@ def run_inferring(cfg: OmegaConf):
     log.setLevel(cfg.log_level.upper())
     pl.seed_everything(cfg.random_seed)
 
-    ckpt_path = Path(cfg.callbacks.model_ckpt.dirpath)
-    best_model_names = list(ckpt_path.glob("best_*.ckpt"))
-    best_checkpoint_name = best_model_names[0]
+    ckpt_path = get_model_path(cfg)
 
-    model = TireCheckModel.load_from_checkpoint(best_checkpoint_name)
+    model = TireCheckModel.load_from_checkpoint(ckpt_path)
 
     dm = instantiate(cfg.data_module)
     dm.setup(stage="predict")

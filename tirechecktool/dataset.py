@@ -65,32 +65,57 @@ class TireCheckDataModule(pl.LightningDataModule):
         if stage == "fit":
             # split dataset
             tires_dataset = datasets.ImageFolder(
-                self.data_dir / "tyre-quality-classification", transform=self.train_transforms
+                self.data_dir / "tyre-quality-classification",
+                transform=self.train_transforms,
             )
             train_size = int(self.train_split * len(tires_dataset))
             val_size = len(tires_dataset) - train_size
-            self.train_dataset, self.val_dataset = random_split(tires_dataset, [train_size, val_size])
+            self.train_dataset, self.val_dataset = random_split(
+                tires_dataset, [train_size, val_size]
+            )
         elif stage == "test":
             self.test_dataset = datasets.ImageFolder(
-                self.data_dir / "tyre-quality-classification", transform=self.val_transforms
+                self.data_dir / "tyre-quality-classification",
+                transform=self.val_transforms,
             )
 
         elif stage == "predict":
             self.predict_dataset = datasets.ImageFolder(
-                self.data_dir / "tyre-quality-classification", transform=self.val_transforms
+                self.data_dir / "tyre-quality-classification",
+                transform=self.val_transforms,
             )
 
     def train_dataloader(self):
-        return DataLoader(self.train_dataset, batch_size=self.batch_size, shuffle=True, num_workers=4)
+        return DataLoader(
+            self.train_dataset,
+            batch_size=self.batch_size,
+            shuffle=True,
+            num_workers=4,
+        )
 
     def val_dataloader(self):
-        return DataLoader(self.val_dataset, batch_size=self.batch_size, shuffle=False, num_workers=4)
+        return DataLoader(
+            self.val_dataset,
+            batch_size=self.batch_size,
+            shuffle=False,
+            num_workers=4,
+        )
 
     def test_dataloader(self):
-        return DataLoader(self.test_dataset, batch_size=self.batch_size, shuffle=False, num_workers=4)
+        return DataLoader(
+            self.test_dataset,
+            batch_size=self.batch_size,
+            shuffle=False,
+            num_workers=4,
+        )
 
     def predict_dataloader(self):
-        return DataLoader(self.predict_dataset, batch_size=self.batch_size, shuffle=False, num_workers=4)
+        return DataLoader(
+            self.predict_dataset,
+            batch_size=self.batch_size,
+            shuffle=False,
+            num_workers=4,
+        )
 
     def teardown(self, stage: str) -> None:
         """
