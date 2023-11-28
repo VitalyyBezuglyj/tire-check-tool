@@ -7,3 +7,5 @@
     url = s3://05c27c56-a6287963-b7a0-4c8f-8912-2f783b71bdef
     endpointurl = https://s3.timeweb.com
     region = ru-1
+    access_key_id = gm76605
+    secret_access_key = f09cc74303c17f3c20bab8ed063b6091
