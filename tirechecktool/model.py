@@ -81,9 +81,7 @@ class TireCheckModel(pl.LightningModule):
         loss = self.loss(logits, y)
         self.train_metrics.update(logits, y)
 
-        self.log(
-            "train_loss", loss, on_step=True, on_epoch=False, prog_bar=True
-        )
+        self.log("train_loss", loss, on_step=True, on_epoch=False, prog_bar=True)
 
         return {"loss": loss}
 
