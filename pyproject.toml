@@ -20,11 +20,15 @@ dvc-gdrive = "^2.20.0"
 lightning = "^2.1.0"
 rich = "^13.6.0"
 pexpect = "^4.8.0"
+onnx = "^1.15.0"
+onnxruntime = "^1.16.3"
+dvc-s3 = "^2.23.0"
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^3.4.0"
 Flake8-pyproject = "^1.2.3"
 icecream = "^2.1.3"
+mlflow = "^2.8.0"
 
 [tool.black]
 line-length = 80

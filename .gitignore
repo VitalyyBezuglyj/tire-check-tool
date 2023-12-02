@@ -166,3 +166,5 @@ tirechecktool/outputs
 /outputs
 /logs
 /lightning_logs
+/mlruns
+/pretrained
