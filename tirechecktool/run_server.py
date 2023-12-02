@@ -73,7 +73,6 @@ def run_server(
         config_name=config_name,
         overrides=[f"{k}={v}" for k, v in kwargs.items()],
     )
-    print(OmegaConf.to_yaml(cfg))
     infer_mlflow(cfg, image)
 
 

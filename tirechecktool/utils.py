@@ -52,7 +52,7 @@ def preprocess_image(image_path, cfg_data: OmegaConf):
 
 def postprocess(output: dict):
     probs = [float(x) * 100 for x in softmax(output["CLASS_PROBS"])[0]]
-    result = "Defective: {0:.2f}% Good {1:.2f}%".format(*probs)
+    result = "Good: {0:.2f}% Defective {1:.2f}%".format(*probs)
 
     return result
 
@@ -120,13 +120,3 @@ def get_model_path(cfg: OmegaConf):
                     or use pretrained model (cfg: use_pretrained)"
             )
         return best_model_names[0]
-
-
-# def load_image(img_path: str, size: list) -> np.ndarray:
-#     img_path = Path(img_path)
-
-#     with Image.open(img_path) as im:
-#         img = np.asarray(im.convert("RGB").resize(tuple(size))) / 255.0
-#         img.
-#         ic(img)
-#         return img
