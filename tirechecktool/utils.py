@@ -1,10 +1,10 @@
 import subprocess
 from pathlib import Path
 
+import cv2
 import numpy as np
 from dvc.repo import Repo
 from omegaconf import OmegaConf
-from PIL import Image
 
 
 def get_git_info():
@@ -30,25 +30,28 @@ def log_git_info(cfg: OmegaConf):
 
 def preprocess_image(image_path, cfg_data: OmegaConf):
     width = height = cfg_data.img_size
-    channel = len(cfg_data.img_std)
-    with Image.open(image_path) as image:
-        #  image = Image.open(image_path)
-        image = image.resize((width, height), Image.LANCZOS)
-        image_data = np.asarray(image).astype(np.float32)
-        image_data = image_data.transpose([2, 0, 1])  # transpose to CHW
-        mean = np.array(cfg_data.img_mean)
-        std = np.array(cfg_data.img_std)
-        for channel in range(image_data.shape[0]):
-            image_data[channel, :, :] = (image_data[channel, :, :] / 255 - mean[channel]) / std[channel]
-        image_data = np.expand_dims(image_data, 0)
-    return image_data
+
+    raw_image = cv2.imread(image_path)
+    blob = cv2.dnn.blobFromImage(raw_image, 1.0, (width, height), cfg_data.img_mean, True, False)
+    return blob
 
 
-def postprocess(output: dict):
-    probs = [float(x) * 100 for x in softmax(output["CLASS_PROBS"])[0]]
+def postprocess(output: np.ndarray):
+    probs = [float(x) * 100 for x in softmax(output)]
     result = "Good: {0:.2f}% Defective {1:.2f}%".format(*probs)
 
     return result
+
+
+def sigmoid(x):
+    """Compute sigmoid values for each sets of scores in x."""
+    return 1 / (1 + np.exp(-x))
+
+
+def log_softmax(x):
+    """Compute log softmax values for each sets of scores in x."""
+    e_x = np.exp(x - np.max(x))
+    return np.log(e_x / e_x.sum() + 1e-6)
 
 
 def softmax(x):

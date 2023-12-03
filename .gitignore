@@ -168,3 +168,4 @@ tirechecktool/outputs
 /lightning_logs
 /mlruns
 /pretrained
+*.onnx
