@@ -1,0 +1,18 @@
+name: "tire_quality_classifier"
+backend: "onnxruntime"
+
+input [
+    {
+        name: "IMAGES"
+        data_type: TYPE_FP32
+        dims: [ -1, 3, 150, 150 ]
+    }
+]
+
+output [
+    {
+        name: "CLASS_PROBS"
+        data_type: TYPE_FP32
+        dims: [ -1, 2 ]
+    }
+]

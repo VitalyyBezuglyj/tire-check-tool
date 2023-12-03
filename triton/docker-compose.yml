@@ -1,0 +1,21 @@
+version: '3.8'
+services:
+  tire_quality_classifier_service:
+    command: ["--model-repository=/models", "--log-info=1"]
+    build: .
+    shm_size: '256mb'
+    restart: unless-stopped
+    ports:
+      - 8500:8000
+      - 8501:8001
+      - 8502:8002
+    volumes:
+      - ./:/workspace
+      - ./model_repository:/models
+    environment:
+      - LC_ALL=C.UTF-8
+      - LANG=C.UTF-8
+    deploy:
+      resources:
+        limits:
+            cpus: '3'

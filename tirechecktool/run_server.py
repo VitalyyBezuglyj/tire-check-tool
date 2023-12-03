@@ -1,48 +1,39 @@
+from functools import lru_cache
 from logging import getLogger
-from pathlib import Path
 
-import mlflow
-import numpy as np
-import onnx
 from hydra import compose, initialize
 from omegaconf import OmegaConf
+from tritonclient.http import InferenceServerClient, InferInput, InferRequestedOutput
 
 from tirechecktool.utils import postprocess, preprocess_image
 
 
-def infer_mlflow(cfg: OmegaConf, image_path: str):
+@lru_cache(maxsize=1)
+def get_triton_client(cfg: OmegaConf):
+    return InferenceServerClient(url=cfg.triton.server_url)
+
+
+def infer_triton(cfg: OmegaConf, image_path: str):
     log = getLogger(__name__)
     log.setLevel(cfg.log_level.upper())
 
-    model_name = cfg.export.export_name
-    if cfg.export.name_version:
-        model_name = f"{model_name}_{cfg.code_version.version}.onnx"
-    else:
-        model_name = f"{model_name}.onnx"
+    triton_client = get_triton_client(cfg)
+    inputs = []
+    outputs = []
+    input_data = preprocess_image(image_path=image_path, cfg_data=cfg.data_module)
+    inputs.append(InferInput("IMAGES", input_data.shape, "FP32"))
+    inputs[-1].set_data_from_numpy(input_data, binary_data=True)
 
-    filepath = Path(cfg.export.export_path) / model_name
-    if not filepath.exists():
-        raise ValueError(f"Model {model_name} does not exist at {filepath.parent.absolute()}")
+    # Create the data for the two output tensors
+    outputs.append(InferRequestedOutput("CLASS_PROBS", binary_data=True))
 
-    onnx_model = onnx.load_model(filepath)
+    # Infer
+    results = triton_client.infer(cfg.triton.model_name, inputs, outputs=outputs)
 
-    # log the model into a mlflow run
-    mlflow.set_tracking_uri(cfg.loggers.mlflow.tracking_uri)
-
-    input_sample = np.random.randn(*cfg.export.input_sample_shape)
-
-    with mlflow.start_run():
-        model_info = mlflow.onnx.log_model(
-            onnx_model,
-            model_name,
-            input_example=input_sample,
-        )
-
-    # load the logged model and make a prediction
-    onnx_pyfunc = mlflow.pyfunc.load_model(model_info.model_uri)
-    predictions = onnx_pyfunc.predict(preprocess_image(image_path=image_path, cfg_data=cfg.data_module))
-
-    print(postprocess(predictions))
+    # Print the results
+    print("Results:")
+    for output in results.as_numpy("CLASS_PROBS"):
+        print(postprocess(output))
 
 
 def run_server(
@@ -69,7 +60,7 @@ def run_server(
         config_name=config_name,
         overrides=[f"{k}={v}" for k, v in kwargs.items()],
     )
-    infer_mlflow(cfg, image)
+    infer_triton(cfg, image)
 
 
 if __name__ == "__main__":
