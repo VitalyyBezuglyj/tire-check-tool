@@ -1,9 +1,9 @@
-version: '3.8'
+version: "3.8"
 services:
   tire_quality_classifier_service:
     command: ["--model-repository=/models", "--log-info=1"]
     build: .
-    shm_size: '256mb'
+    shm_size: "256mb"
     restart: unless-stopped
     ports:
       - 8500:8000
@@ -18,4 +18,4 @@ services:
     deploy:
       resources:
         limits:
-            cpus: '3'
+          cpus: "3"
