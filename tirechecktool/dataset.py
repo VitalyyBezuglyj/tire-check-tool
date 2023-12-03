@@ -5,6 +5,7 @@ import pytorch_lightning as pl
 from dvc.repo import Repo
 from torch.utils.data import DataLoader, random_split
 from torchvision import datasets, transforms
+
 from tirechecktool.utils import get_git_info
 
 
@@ -75,9 +76,7 @@ class TireCheckDataModule(pl.LightningDataModule):
             )
             train_size = int(self.train_split * len(tires_dataset))
             val_size = len(tires_dataset) - train_size
-            self.train_dataset, self.val_dataset = random_split(
-                tires_dataset, [train_size, val_size]
-            )
+            self.train_dataset, self.val_dataset = random_split(tires_dataset, [train_size, val_size])
         elif stage == "test":
             self.test_dataset = datasets.ImageFolder(
                 self.data_dir / "tyre-quality-classification",
