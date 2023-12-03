@@ -21,13 +21,17 @@ def export_to_onnx(cfg: OmegaConf):
 
     model = TireCheckModel.load_from_checkpoint(ckpt_path)
 
-    model_name = cfg.export.export_name
-    if cfg.export.name_version:
-        model_name = f"{model_name}_{cfg.code_version.version}.onnx"
+    if cfg.export.export_triton:
+        model_name = "model.onnx"
+        filepath = Path(cfg.triton.models_path) / model_name
     else:
-        model_name = f"{model_name}.onnx"
-    filepath = Path(cfg.export.export_path) / model_name
-    filepath.parent.mkdir(parents=True, exist_ok=True)
+        model_name = cfg.export.export_name
+        if cfg.export.name_version:
+            model_name = f"{model_name}_{cfg.code_version.version}.onnx"
+        else:
+            model_name = f"{model_name}.onnx"
+        filepath = Path(cfg.export.export_path) / model_name
+        filepath.parent.mkdir(parents=True, exist_ok=True)
 
     input_sample = torch.randn(tuple(cfg.export.input_sample_shape))
     model.to_onnx(
