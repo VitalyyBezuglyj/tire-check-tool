@@ -6,6 +6,8 @@ import numpy as np
 from dvc.repo import Repo
 from omegaconf import OmegaConf
 
+from PIL import Image
+
 
 def get_git_info():
     """
@@ -14,7 +16,11 @@ def get_git_info():
     Returns:
         str: git commit id
     """
-    return subprocess.check_output(["git", "describe", "--always"]).strip().decode()
+    return (
+        subprocess.check_output(["git", "describe", "--always"])
+        .strip()
+        .decode()
+    )
 
 
 def log_git_info(cfg: OmegaConf):
@@ -30,9 +36,29 @@ def log_git_info(cfg: OmegaConf):
 
 def preprocess_image(image_path, cfg_data: OmegaConf):
     width = height = cfg_data.img_size
+    channel = len(cfg_data.img_std)
+    with Image.open(image_path) as image:
+        #  image = Image.open(image_path)
+        image = image.resize((width, height), Image.LANCZOS)
+        image_data = np.asarray(image).astype(np.float32)
+        image_data = image_data.transpose([2, 0, 1])  # transpose to CHW
+        mean = np.array(cfg_data.img_mean)
+        std = np.array(cfg_data.img_std)
+        for channel in range(image_data.shape[0]):
+            image_data[channel, :, :] = (
+                image_data[channel, :, :] / 255 - mean[channel]
+            ) / std[channel]
+        image_data = np.expand_dims(image_data, 0)
+    return image_data
+
+
+def preprocess_image_binary(image_path, cfg_data: OmegaConf):
+    width = height = cfg_data.img_size
 
     raw_image = cv2.imread(image_path)
-    blob = cv2.dnn.blobFromImage(raw_image, 1.0, (width, height), cfg_data.img_mean, True, False)
+    blob = cv2.dnn.blobFromImage(
+        raw_image, 1.0, (width, height), cfg_data.img_mean, True, False
+    )
     return blob
 
 
@@ -93,16 +119,24 @@ def get_model_path(cfg: OmegaConf):
             if model_path.exists():
                 return model_path
             else:
-                raise ValueError(f"Model {cfg.pretrained_model} does not exist at {model_path.absolute()}")
+                raise ValueError(
+                    f"Model {cfg.pretrained_model} does not exist at {model_path.absolute()}"
+                )
         else:
-            pretrained_model_names = sorted(list(data_path.glob("*.ckpt")), reverse=True)
+            pretrained_model_names = sorted(
+                list(data_path.glob("*.ckpt")), reverse=True
+            )
             if len(pretrained_model_names) == 0:
-                raise ValueError(f"No pretrained model found at {data_path.absolute()}")
+                raise ValueError(
+                    f"No pretrained model found at {data_path.absolute()}"
+                )
             return pretrained_model_names[0]
     else:
         # Choose best ckpt from training
         ckpt_path = Path(cfg.callbacks.model_ckpt.dirpath)
-        best_model_names = sorted(list(ckpt_path.glob("best_*.ckpt")), reverse=True)
+        best_model_names = sorted(
+            list(ckpt_path.glob("best_*.ckpt")), reverse=True
+        )
         if len(best_model_names) == 0:
             raise ValueError(
                 f"No best model found at {ckpt_path.absolute()}, please train model first,\

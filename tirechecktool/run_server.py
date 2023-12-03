@@ -3,7 +3,11 @@ from logging import getLogger
 
 from hydra import compose, initialize
 from omegaconf import OmegaConf
-from tritonclient.http import InferenceServerClient, InferInput, InferRequestedOutput
+from tritonclient.http import (
+    InferenceServerClient,
+    InferInput,
+    InferRequestedOutput,
+)
 
 from tirechecktool.utils import postprocess, preprocess_image
 
@@ -20,15 +24,19 @@ def infer_triton(cfg: OmegaConf, image_path: str):
     triton_client = get_triton_client(cfg)
     inputs = []
     outputs = []
-    input_data = preprocess_image(image_path=image_path, cfg_data=cfg.data_module)
+    input_data = preprocess_image(
+        image_path=image_path, cfg_data=cfg.data_module
+    )
     inputs.append(InferInput("IMAGES", input_data.shape, "FP32"))
-    inputs[-1].set_data_from_numpy(input_data, binary_data=True)
+    inputs[-1].set_data_from_numpy(input_data, binary_data=False)
 
     # Create the data for the two output tensors
     outputs.append(InferRequestedOutput("CLASS_PROBS", binary_data=True))
 
     # Infer
-    results = triton_client.infer(cfg.triton.model_name, inputs, outputs=outputs)
+    results = triton_client.infer(
+        cfg.triton.model_name, inputs, outputs=outputs
+    )
 
     # Print the results
     print("Results:")
