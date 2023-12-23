@@ -1,5 +1,6 @@
 name: "tire_quality_classifier"
 backend: "onnxruntime"
+max_batch_size: 4
 
 input [
     {
@@ -16,3 +17,13 @@ output [
         dims: [ -1, 2 ]
     }
 ]
+instance_group [ { count: 4 }]
+optimization { execution_accelerators {
+    cpu_execution_accelerator : [ {
+      name : "openvino"
+    }]
+  }}
+dynamic_batching {
+    # preferred_batch_size: 4
+    # max_queue_delay_microseconds: 200
+}

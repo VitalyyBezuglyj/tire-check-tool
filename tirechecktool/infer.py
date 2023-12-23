@@ -4,6 +4,7 @@ import pytorch_lightning as pl
 import torch
 from hydra import compose, initialize
 from hydra.utils import instantiate
+from loguru import logger
 from omegaconf import OmegaConf
 
 from tirechecktool.model import TireCheckModel
@@ -31,6 +32,7 @@ def run_inferring(cfg: OmegaConf):
     trainer.test(model, dm)
 
 
+@logger.catch
 def infer(config_path: str = "../configs", config_name: str = "default", **kwargs):
     """
     Run inference. `infer -- --help` for more info.
@@ -49,7 +51,7 @@ def infer(config_path: str = "../configs", config_name: str = "default", **kwarg
         config_name=config_name,
         overrides=[f"{k}={v}" for k, v in kwargs.items()],
     )
-    print(OmegaConf.to_yaml(cfg))
+    logger.info(OmegaConf.to_yaml(cfg))
     run_inferring(cfg)
 
 

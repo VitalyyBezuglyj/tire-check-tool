@@ -25,6 +25,7 @@ onnxruntime = "^1.16.3"
 dvc-s3 = "^2.23.0"
 tritonclient = {extras = ["http"], version = "^2.40.0"}
 opencv-python-headless = "^4.8.1.78"
+loguru = "^0.7.2"
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^3.4.0"

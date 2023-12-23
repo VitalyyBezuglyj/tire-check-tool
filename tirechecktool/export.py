@@ -4,12 +4,11 @@ from pathlib import Path
 import pytorch_lightning as pl
 import torch
 from hydra import compose, initialize
+from loguru import logger
 from omegaconf import OmegaConf
 
 from tirechecktool.model import TireCheckModel
 from tirechecktool.utils import get_model_path
-
-# from icecream import ic
 
 
 def export_to_onnx(cfg: OmegaConf):
@@ -51,6 +50,7 @@ def export_to_onnx(cfg: OmegaConf):
     log.info(f"Exported to {filepath}")
 
 
+@logger.catch
 def export_onnx(config_name: str = "default", config_path: str = "../configs", **kwargs):
     """
     Run training. `train -- --help` for more info.
@@ -60,7 +60,7 @@ def export_onnx(config_name: str = "default", config_path: str = "../configs", *
     :param config_name: name of config file, inside config_path
     :param **kwargs: additional arguments, overrides for config. Can be passed as `--arg=value`.
     """
-    print(f"Curr path: {Path.cwd()}")
+    logger.info(f"Curr path: {Path.cwd()}")
     initialize(
         version_base="1.3",
         config_path=config_path,
@@ -70,7 +70,7 @@ def export_onnx(config_name: str = "default", config_path: str = "../configs", *
         config_name=config_name,
         overrides=[f"{k}={v}" for k, v in kwargs.items()],
     )
-    print(OmegaConf.to_yaml(cfg))
+    logger.info(OmegaConf.to_yaml(cfg))
     export_to_onnx(cfg)
 
 

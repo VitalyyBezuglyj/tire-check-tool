@@ -9,6 +9,10 @@ use_pretrained: False
 pretrained_dir: "pretrained"
 pretrained_model: "" # if empty, will use the latest checkpoint
 
+test_triton:
+  test_num: 10
+  tolerance: 1e-5
+
 triton:
   model_name: "tire_quality_classifier"
   server_url: "localhost:8500"

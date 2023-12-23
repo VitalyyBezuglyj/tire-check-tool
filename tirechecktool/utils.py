@@ -4,6 +4,7 @@ from pathlib import Path
 import cv2
 import numpy as np
 from dvc.repo import Repo
+from loguru import logger
 from omegaconf import OmegaConf
 from PIL import Image
 
@@ -84,7 +85,7 @@ def load_pretained_models(cfg: OmegaConf):
     # check if data already exists
     data_path = Path(cfg.pretrained_dir)
     if data_path.exists():
-        print("Pretrained models already loaded")
+        logger.info("Pretrained models already loaded")
         return
 
     log_git_info(cfg)
@@ -93,7 +94,7 @@ def load_pretained_models(cfg: OmegaConf):
         cfg.pretrained_dir,
         rev=cfg.code_version.git_commit_id,
     )
-    print("Pretrained models loaded")
+    logger.info("Pretrained models loaded")
 
 
 def get_model_path(cfg: OmegaConf):
